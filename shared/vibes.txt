@@ -1,0 +1,5 @@
+Help me create an interactive app that displays the SEO (meta) tags for any website in an interactive and visual way to check that they’re properly implemented.
+
+The app should fetch the HTML for a site, then provide feedback on SEO tags in accordance with best practices for SEO optimization
+
+The app should give google and Social media previews.
