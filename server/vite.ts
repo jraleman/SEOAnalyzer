@@ -11,6 +11,12 @@ import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
 
+export type ServerOptions = {
+  middlewareMode: boolean;
+  hmr: { server: Server };
+  allowedHosts?: true | string[];
+}
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -23,7 +29,7 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
+  const serverOptions: ServerOptions = {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true,

@@ -57,11 +57,8 @@ export default function ScoreOverview({ url, seoScore, metaTagsCount, issuesCoun
                 strokeWidth="3"
                 strokeDasharray={`${seoScore}, 100`}
               />
-              <text x="18" y="19" className="text-3xl font-bold" textAnchor="middle" fill={getScoreStrokeColor(seoScore)}>
+              <text x="18" y="22" className="text-xs font-bold" textAnchor="middle" fill={getScoreStrokeColor(seoScore)}>
                 {seoScore}
-              </text>
-              <text x="18" y="24" className="text-xs" textAnchor="middle" fill="currentColor">
-                /100
               </text>
             </svg>
           </div>

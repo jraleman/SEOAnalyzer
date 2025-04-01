@@ -3,3 +3,19 @@ Help me create an interactive app that displays the SEO (meta) tags for any webs
 The app should fetch the HTML for a site, then provide feedback on SEO tags in accordance with best practices for SEO optimization
 
 The app should give google and Social media previews.
+
+---
+
+Make sure the website is responsive. The overall score with the circular progress should be center aligned. Text shouldn't overflow. Modify the form input so I don't have to type "https://" everytime.
+
+---
+
+Please implement the export functionality, save as a pdf file. It should be formatted correctly so I am able to print it out.
+
+---
+
+Generate a README.md file for this project. Make sure to include sections for usage and any other relevant info needed to get started on running the project. Include project description, dependencies used (and their use), etc.
+
+---
+
+Remove database functionality and any other code that is not being used.

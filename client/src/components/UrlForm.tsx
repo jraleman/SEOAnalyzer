@@ -96,7 +96,7 @@ export default function UrlForm({ onSubmit, isLoading }: UrlFormProps) {
                 )}
               />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-center">
               <Button 
                 type="submit" 
                 disabled={isLoading || !form.getValues().url}

@@ -1,4 +1,4 @@
-# SEOAnalyzer
+# SEO Meta Tag Analyzer
 
 ![SEO Meta Tag Analyzer](./generated-icon.png)
 
@@ -20,6 +20,7 @@ A powerful, interactive web application for analyzing and visualizing SEO meta t
 - **HTTP Client**: Axios for API requests
 - **PDF Generation**: jsPDF and html2canvas for report generation
 - **Web Scraping**: Cheerio for HTML parsing and analysis
+- **No Database Required**: Pure client-server architecture with no data persistence needs
 
 ## 🚀 Getting Started
 
@@ -48,6 +49,10 @@ A powerful, interactive web application for analyzing and visualizing SEO meta t
 
 4. Open your browser and navigate to:
    ```
+   http://localhost:5000
+   ```
+   or
+      ```
    http://127.0.0.1:5000
    ```
 
@@ -105,13 +110,13 @@ The PDF export functionality generates a professionally formatted report with:
 │   │   ├── components/    # React components 
 │   │   ├── hooks/         # Custom React hooks
 │   │   ├── lib/           # Utility functions and services
+│   │   │   └── pdfExport.ts  # PDF generation utility
 │   │   ├── pages/         # Main application pages
 │   │   └── App.tsx        # Main application component
 ├── server/                # Backend code
 │   ├── index.ts           # Server entry point
 │   ├── routes.ts          # API routes
-│   ├── seoAnalyzer.ts     # SEO analysis logic
-│   └── storage.ts         # Data storage interface
+│   └── seoAnalyzer.ts     # SEO analysis logic
 ├── shared/                # Shared code between client and server
 │   └── schema.ts          # Zod schemas and TypeScript types
 └── README.md              # This file

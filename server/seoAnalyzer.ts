@@ -98,12 +98,14 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       content: pageTitle,
       status: titleValidation.status,
       message: titleValidation.message,
+      missing: false,
     },
     {
       name: 'description',
       content: metaDescription,
       status: descriptionValidation.status,
       message: descriptionValidation.message,
+      missing: false,
     }
   ];
   
@@ -112,7 +114,8 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       name: 'keywords',
       content: metaKeywords,
       status: 'info',
-      message: 'Keywords meta tag has limited SEO value in modern search algorithms.'
+      message: 'Keywords meta tag has limited SEO value in modern search algorithms.',
+      missing: false,
     });
   }
   
@@ -124,6 +127,7 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       property: 'og:title',
       content: ogTitle,
       status: 'good',
+      missing: false,
     });
   } else {
     socialMetaTags.push({
@@ -139,7 +143,8 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       property: 'og:description',
       content: ogDescription,
       status: ogDescription === metaDescription ? 'info' : 'good',
-      message: ogDescription === metaDescription ? 'Using the same content as meta description' : undefined
+      message: ogDescription === metaDescription ? 'Using the same content as meta description' : undefined,
+      missing: false,
     });
   } else {
     socialMetaTags.push({
@@ -155,6 +160,7 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       property: 'og:image',
       content: ogImage,
       status: 'good',
+      missing: false,
     });
   } else {
     socialMetaTags.push({
@@ -170,6 +176,7 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       name: 'twitter:card',
       content: twitterCard,
       status: 'good',
+      missing: false,
     });
   } else {
     socialMetaTags.push({
@@ -186,6 +193,7 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       name: 'twitter:title',
       content: twitterTitle,
       status: 'good',
+      missing: false,
     });
   }
   
@@ -194,6 +202,7 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       name: 'twitter:description',
       content: twitterDescription,
       status: 'good',
+      missing: false,
     });
   }
   
@@ -202,6 +211,7 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       name: 'twitter:image',
       content: twitterImage,
       status: 'good',
+      missing: false,
     });
   }
   
@@ -213,6 +223,7 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       name: 'viewport',
       content: viewport,
       status: 'good',
+      missing: false,
     });
   } else {
     technicalMetaTags.push({
@@ -228,14 +239,16 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       name: 'robots',
       content: robots,
       status: robots.includes('noindex') ? 'warning' : 'good',
-      message: robots.includes('noindex') ? 'Your page is set to not be indexed by search engines.' : undefined
+      message: robots.includes('noindex') ? 'Your page is set to not be indexed by search engines.' : undefined,
+      missing: false,
     });
   } else {
     technicalMetaTags.push({
       name: 'robots',
       content: 'index, follow', // Default behavior
       status: 'info',
-      message: 'No robots meta tag specified. Defaults to "index, follow".'
+      message: 'No robots meta tag specified. Defaults to "index, follow".',
+      missing: false,
     });
   }
   
@@ -244,6 +257,7 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
       rel: 'canonical',
       href: canonical,
       status: 'good',
+      missing: false,
     });
   } else {
     technicalMetaTags.push({

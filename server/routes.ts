@@ -1,6 +1,5 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
 import { fetchUrlContent, analyzeSeoTags } from "./seoAnalyzer";
 import { SeoAnalysis, seoAnalysisSchema } from "@shared/schema";
 import { z } from "zod";
