@@ -2,10 +2,990 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Analyze SEO meta tags from any website to ensure optimal search engine visibility and social media sharing experience." />
+    <meta name="keywords" content="SEO analyzer, meta tags, SEO tools, website analyzer, SEO checker" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SEOAnalyzer" />
+    <meta property="og:description" content="Check and analyze SEO meta tags from any website to ensure optimal search engine and social media presence." />
+    <meta property="og:url" content="https://jraleman.github.io/SEOAnalyzer/" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SEOAnalyzer" />
+    <meta name="twitter:description" content="Check and analyze SEO meta tags from any website to ensure optimal search engine and social media presence." />
+    
+    <title>SEOAnalyzer</title>
+    
+    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load cheerio (HTML parser) for analyzing meta tags -->
+    <script src="https://unpkg.com/cheerio@1.0.0/lib/index.min.js"></script>
+    
+    <!-- Load jspdf and html2canvas for PDF export -->
+    <script src="https://unpkg.com/jspdf@3.0.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    
+    <style>
+      /* Default styling */
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #333;
+        background-color: #f9fafb;
+      }
+      
+      /* Custom styles */
+      .gradient-text {
+        background: linear-gradient(to right, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      
+      .loading-spinner {
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      
+      /* Status badge colors */
+      .status-good {
+        background-color: #10b981;
+      }
+      .status-warning {
+        background-color: #f59e0b;
+      }
+      .status-error {
+        background-color: #ef4444;
+      }
+      .status-info {
+        background-color: #3b82f6;
+      }
+      
+      /* Tab styles */
+      .tab {
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border-bottom: 2px solid transparent;
+      }
+      .tab.active {
+        border-color: #6366f1;
+        color: #6366f1;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="src/main.tsx"></script>
+    <div id="root">
+      <div class="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
+        <header class="mb-6 md:mb-8 text-center">
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2 gradient-text">SEOAnalyzer</h1>
+          <p class="text-gray-600 max-w-2xl mx-auto px-2">
+            Check and analyze SEO meta tags from any website to ensure optimal search engine and social media presence.
+          </p>
+        </header>
+        
+        <!-- URL Input Form -->
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+          <form id="url-form" class="flex flex-col md:flex-row gap-3">
+            <div class="flex-grow">
+              <input 
+                type="text" 
+                id="url-input"
+                placeholder="Enter a website URL (e.g., example.com)" 
+                class="px-3 py-2 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                required
+              />
+            </div>
+            <button 
+              type="submit" 
+              id="analyze-button"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 h-10 py-2 px-4"
+            >
+              Analyze
+            </button>
+          </form>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loading-state" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 mb-4">
+            <svg class="w-8 h-8 text-indigo-600 loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-1">Analyzing URL</h3>
+          <p class="text-gray-500">Please wait while we fetch and analyze the meta tags...</p>
+        </div>
+        
+        <!-- Error State -->
+        <div id="error-state" class="hidden bg-white rounded-lg shadow-sm border border-red-200 p-8 text-center">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+            <svg class="w-8 h-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-1">Error</h3>
+          <p id="error-message" class="text-gray-500 mb-4">Failed to analyze the URL. Please check the URL and try again.</p>
+          <button 
+            id="try-again-button"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-red-600 text-white hover:bg-red-700 h-10 py-2 px-4"
+          >
+            Try Again
+          </button>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+            <svg class="w-8 h-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-1">Analyze SEO Meta Tags</h3>
+          <p class="text-gray-500">Enter a URL above to check meta tags and get recommendations for better SEO performance.</p>
+        </div>
+        
+        <!-- Results (Initially Hidden) -->
+        <div id="results-container" class="hidden space-y-6">
+          <!-- Results will be dynamically inserted here by JavaScript -->
+        </div>
+        
+        <footer class="text-center text-gray-500 text-sm mt-8">
+          <p>SEOAnalyzer &copy; <span id="current-year"></span> | Check meta tags for better search engine optimization</p>
+        </footer>
+      </div>
+    </div>
+    
+    <script>
+      // Set current year in footer
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+      
+      // DOM elements
+      const urlForm = document.getElementById('url-form');
+      const urlInput = document.getElementById('url-input');
+      const analyzeButton = document.getElementById('analyze-button');
+      const loadingState = document.getElementById('loading-state');
+      const errorState = document.getElementById('error-state');
+      const emptyState = document.getElementById('empty-state');
+      const resultsContainer = document.getElementById('results-container');
+      const errorMessage = document.getElementById('error-message');
+      const tryAgainButton = document.getElementById('try-again-button');
+      
+      // Current analysis state
+      let currentAnalysis = null;
+      
+      // CORS proxy for fetching external websites
+      const CORS_PROXY = 'https://corsproxy.io/?';
+      
+      // Event listeners
+      urlForm.addEventListener('submit', handleFormSubmit);
+      tryAgainButton.addEventListener('click', resetForm);
+      
+      // Handle form submission
+      function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        let url = urlInput.value.trim();
+        
+        // Add https:// if not present
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          url = 'https://' + url;
+          urlInput.value = url;
+        }
+        
+        // Show loading state
+        showLoading();
+        
+        // Analyze the URL
+        analyzeUrl(url)
+          .then(analysis => {
+            // Store the current analysis
+            currentAnalysis = analysis;
+            
+            // Hide loading and display results
+            hideLoading();
+            showResults(analysis);
+          })
+          .catch(error => {
+            // Hide loading and show error
+            hideLoading();
+            showError(error.message);
+          });
+      }
+      
+      // Show loading state
+      function showLoading() {
+        emptyState.classList.add('hidden');
+        errorState.classList.add('hidden');
+        resultsContainer.classList.add('hidden');
+        loadingState.classList.remove('hidden');
+        analyzeButton.disabled = true;
+      }
+      
+      // Hide loading state
+      function hideLoading() {
+        loadingState.classList.add('hidden');
+        analyzeButton.disabled = false;
+      }
+      
+      // Show error state
+      function showError(message) {
+        errorMessage.textContent = message || 'Failed to analyze the URL. Please check the URL and try again.';
+        errorState.classList.remove('hidden');
+      }
+      
+      // Reset form and UI
+      function resetForm() {
+        errorState.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+      }
+      
+      // Fetch HTML content from URL using CORS proxy
+      async function fetchUrlContent(url) {
+        try {
+          const response = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`, {
+            headers: {
+              'Accept': 'text/html',
+              'User-Agent': 'Mozilla/5.0 (compatible; SeoMetaTagAnalyzer/1.0)'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch URL: HTTP ${response.status}`);
+          }
+          
+          return await response.text();
+        } catch (error) {
+          throw new Error('Failed to fetch URL: Network error');
+        }
+      }
+      
+      // Validate title tag
+      function validateTitleTag(title) {
+        if (!title) {
+          return { status: 'error', message: 'Title tag is missing.' };
+        }
+        
+        if (title.length < 30) {
+          return { 
+            status: 'warning', 
+            message: 'Title is too short. Recommended length is 50-60 characters.' 
+          };
+        }
+        
+        if (title.length > 60) {
+          return { 
+            status: 'warning', 
+            message: 'Title is too long. Recommended length is 50-60 characters.' 
+          };
+        }
+        
+        return { status: 'good', message: 'Title length is optimal.' };
+      }
+      
+      // Validate meta description
+      function validateMetaDescription(description) {
+        if (!description) {
+          return { status: 'error', message: 'Meta description is missing.' };
+        }
+        
+        if (description.length < 120) {
+          return { 
+            status: 'warning', 
+            message: 'Description is too short. Recommended length is 120-160 characters.' 
+          };
+        }
+        
+        if (description.length > 160) {
+          return { 
+            status: 'warning', 
+            message: 'Description is too long. Recommended length is 120-160 characters.' 
+          };
+        }
+        
+        return { status: 'good', message: 'Description length is optimal.' };
+      }
+      
+      // Analyze SEO tags from HTML
+      function analyzeSeoTags(html, url) {
+        // Create a DOM parser
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Initialize arrays for meta tags
+        const basicMetaTags = [];
+        const socialMetaTags = [];
+        const technicalMetaTags = [];
+        const recommendations = [];
+        
+        // Get page title
+        const pageTitle = doc.querySelector('title')?.textContent.trim();
+        const titleStatus = validateTitleTag(pageTitle);
+        
+        basicMetaTags.push({
+          name: 'title',
+          content: pageTitle,
+          status: titleStatus.status,
+          message: titleStatus.message,
+          missing: !pageTitle
+        });
+        
+        if (titleStatus.status === 'error') {
+          recommendations.push({
+            title: 'Add a title tag',
+            description: 'Title tags are essential for SEO and user experience. Add a descriptive title between 50-60 characters.',
+            code: '<title>Your descriptive page title here</title>'
+          });
+        } else if (titleStatus.status === 'warning') {
+          recommendations.push({
+            title: 'Optimize your title tag',
+            description: titleStatus.message,
+            code: '<title>Your optimized title (50-60 characters)</title>'
+          });
+        }
+        
+        // Get meta description
+        const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content');
+        const descriptionStatus = validateMetaDescription(metaDescription);
+        
+        basicMetaTags.push({
+          name: 'description',
+          content: metaDescription,
+          status: descriptionStatus.status,
+          message: descriptionStatus.message,
+          missing: !metaDescription
+        });
+        
+        if (descriptionStatus.status === 'error') {
+          recommendations.push({
+            title: 'Add a meta description',
+            description: 'Meta descriptions help improve click-through rates from search results. Add a description between 120-160 characters.',
+            code: '<meta name="description" content="Your compelling description here (120-160 characters)">'
+          });
+        } else if (descriptionStatus.status === 'warning') {
+          recommendations.push({
+            title: 'Optimize your meta description',
+            description: descriptionStatus.message,
+            code: '<meta name="description" content="Your optimized description (120-160 characters)">'
+          });
+        }
+        
+        // Get meta keywords
+        const metaKeywords = doc.querySelector('meta[name="keywords"]')?.getAttribute('content');
+        
+        basicMetaTags.push({
+          name: 'keywords',
+          content: metaKeywords,
+          status: 'info',
+          message: metaKeywords ? 'Keywords are present but have limited impact on modern SEO.' : 'Keywords meta tag is missing, but has limited impact on modern SEO.',
+          missing: !metaKeywords
+        });
+        
+        // Check canonical URL
+        const canonicalUrl = doc.querySelector('link[rel="canonical"]')?.getAttribute('href');
+        
+        basicMetaTags.push({
+          rel: 'canonical',
+          href: canonicalUrl,
+          status: canonicalUrl ? 'good' : 'warning',
+          message: canonicalUrl ? 'Canonical URL is properly set.' : 'Canonical URL is missing. It helps prevent duplicate content issues.',
+          missing: !canonicalUrl
+        });
+        
+        if (!canonicalUrl) {
+          recommendations.push({
+            title: 'Add a canonical URL',
+            description: 'Canonical URLs help prevent duplicate content issues by specifying the preferred version of a page.',
+            code: `<link rel="canonical" href="${url}">`
+          });
+        }
+        
+        // Check Open Graph tags
+        const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content');
+        const ogDescription = doc.querySelector('meta[property="og:description"]')?.getAttribute('content');
+        const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+        const ogUrl = doc.querySelector('meta[property="og:url"]')?.getAttribute('content');
+        const ogType = doc.querySelector('meta[property="og:type"]')?.getAttribute('content');
+        
+        socialMetaTags.push({
+          property: 'og:title',
+          content: ogTitle,
+          status: ogTitle ? 'good' : 'warning',
+          message: ogTitle ? 'Open Graph title is present.' : 'Open Graph title is missing. Important for social media sharing.',
+          missing: !ogTitle
+        });
+        
+        socialMetaTags.push({
+          property: 'og:description',
+          content: ogDescription,
+          status: ogDescription ? 'good' : 'warning',
+          message: ogDescription ? 'Open Graph description is present.' : 'Open Graph description is missing. Important for social media sharing.',
+          missing: !ogDescription
+        });
+        
+        socialMetaTags.push({
+          property: 'og:image',
+          content: ogImage,
+          status: ogImage ? 'good' : 'warning',
+          message: ogImage ? 'Open Graph image is present.' : 'Open Graph image is missing. Images improve engagement on social media.',
+          missing: !ogImage
+        });
+        
+        if (!ogTitle || !ogDescription || !ogImage) {
+          recommendations.push({
+            title: 'Add Open Graph meta tags',
+            description: 'Open Graph meta tags improve how your content appears when shared on social media platforms.',
+            code: `<meta property="og:title" content="Your title here">
+<meta property="og:description" content="Your description here">
+<meta property="og:image" content="https://example.com/image.jpg">
+<meta property="og:url" content="${url}">
+<meta property="og:type" content="website">`
+          });
+        }
+        
+        // Check Twitter Card tags
+        const twitterCard = doc.querySelector('meta[name="twitter:card"]')?.getAttribute('content');
+        const twitterTitle = doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content');
+        const twitterDescription = doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content');
+        const twitterImage = doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+        
+        socialMetaTags.push({
+          name: 'twitter:card',
+          content: twitterCard,
+          status: twitterCard ? 'good' : 'warning',
+          message: twitterCard ? `Twitter card type: ${twitterCard}` : 'Twitter card type is missing. Specifies how your content appears on Twitter.',
+          missing: !twitterCard
+        });
+        
+        if (!twitterCard) {
+          recommendations.push({
+            title: 'Add Twitter Card meta tags',
+            description: 'Twitter Card meta tags control how your content appears when shared on Twitter.',
+            code: `<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Your title here">
+<meta name="twitter:description" content="Your description here">
+<meta name="twitter:image" content="https://example.com/image.jpg">`
+          });
+        }
+        
+        // Check viewport
+        const viewport = doc.querySelector('meta[name="viewport"]')?.getAttribute('content');
+        
+        technicalMetaTags.push({
+          name: 'viewport',
+          content: viewport,
+          status: viewport ? 'good' : 'warning',
+          message: viewport ? 'Viewport is properly set.' : 'Viewport meta tag is missing. Important for mobile responsiveness.',
+          missing: !viewport
+        });
+        
+        if (!viewport) {
+          recommendations.push({
+            title: 'Add a viewport meta tag',
+            description: 'The viewport meta tag ensures your page is mobile-friendly, which is essential for SEO.',
+            code: '<meta name="viewport" content="width=device-width, initial-scale=1">'
+          });
+        }
+        
+        // Check charset
+        const charset = doc.querySelector('meta[charset]')?.getAttribute('charset');
+        
+        technicalMetaTags.push({
+          name: 'charset',
+          content: charset,
+          status: charset ? 'good' : 'warning',
+          message: charset ? `Character encoding: ${charset}` : 'Character encoding is not explicitly set.',
+          missing: !charset
+        });
+        
+        // Calculate scores and counts
+        const metaTagsCount = basicMetaTags.length + socialMetaTags.length + technicalMetaTags.length;
+        
+        // Count issues (error and warning status)
+        const allTags = [...basicMetaTags, ...socialMetaTags, ...technicalMetaTags];
+        const issuesCount = allTags.filter(tag => tag.status === 'error' || tag.status === 'warning').length;
+        
+        // Calculate a simple SEO score
+        const goodTags = allTags.filter(tag => tag.status === 'good').length;
+        const infoTags = allTags.filter(tag => tag.status === 'info').length;
+        const warningTags = allTags.filter(tag => tag.status === 'warning').length;
+        const errorTags = allTags.filter(tag => tag.status === 'error').length;
+        
+        // Give higher weight to good tags, lower weight to warnings and errors
+        const score = (goodTags * 100 + infoTags * 50) / (allTags.length * 100) * 100;
+        const seoScore = Math.round(score);
+        
+        // Return the complete analysis
+        return {
+          url,
+          pageTitle,
+          seoScore,
+          metaTagsCount,
+          issuesCount,
+          metaDescription,
+          metaKeywords,
+          ogTitle,
+          ogDescription,
+          ogImage,
+          twitterTitle,
+          twitterDescription,
+          twitterImage,
+          basicMetaTags,
+          socialMetaTags,
+          technicalMetaTags,
+          recommendations
+        };
+      }
+      
+      // Analyze URL
+      async function analyzeUrl(url) {
+        try {
+          // Fetch the URL content
+          const html = await fetchUrlContent(url);
+          
+          // Analyze the SEO tags
+          return analyzeSeoTags(html, url);
+        } catch (error) {
+          throw new Error(`Failed to analyze URL: ${error.message}`);
+        }
+      }
+      
+      // Get the status badge based on status
+      function getStatusBadge(status) {
+        const statusClasses = {
+          good: 'bg-green-500',
+          warning: 'bg-amber-500',
+          error: 'bg-red-500',
+          info: 'bg-blue-500'
+        };
+        
+        const statusText = {
+          good: 'Good',
+          warning: 'Warning',
+          error: 'Error',
+          info: 'Info'
+        };
+        
+        return `
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white ${statusClasses[status] || 'bg-gray-500'}">
+            ${statusText[status] || 'Unknown'}
+          </span>
+        `;
+      }
+      
+      // Format meta tag list
+      function formatMetaTagList(tags) {
+        if (tags.length === 0) {
+          return '<p class="text-gray-500 italic">No tags found in this category.</p>';
+        }
+        
+        return `
+          <div class="space-y-3">
+            ${tags.map(tag => `
+              <div class="p-3 border border-gray-200 rounded-md">
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    ${tag.name ? `<strong class="text-gray-700">${tag.name}</strong>` : ''}
+                    ${tag.property ? `<strong class="text-gray-700">${tag.property}</strong>` : ''}
+                    ${tag.rel ? `<strong class="text-gray-700">rel="${tag.rel}"</strong>` : ''}
+                  </div>
+                  <div>
+                    ${getStatusBadge(tag.status)}
+                  </div>
+                </div>
+                <p class="text-sm text-gray-600 mb-1">${tag.message}</p>
+                ${tag.content ? `<div class="text-xs bg-gray-100 p-2 rounded break-all"><code>${tag.content}</code></div>` : ''}
+                ${tag.href ? `<div class="text-xs bg-gray-100 p-2 rounded break-all"><code>${tag.href}</code></div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      
+      // Toggle tab visibility
+      function toggleTab(event, tabName) {
+        // Get all tab contents and tabs
+        const tabContents = document.querySelectorAll('.tab-content');
+        const tabs = document.querySelectorAll('.tab');
+        
+        // Hide all tab contents and remove active class from tabs
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+        });
+        
+        tabs.forEach(tab => {
+          tab.classList.remove('active');
+        });
+        
+        // Show the selected tab content and add active class to the clicked tab
+        document.getElementById(tabName).classList.add('active');
+        event.currentTarget.classList.add('active');
+      }
+      
+      // Generate Google search preview
+      function generateGooglePreview(analysis) {
+        const title = analysis.pageTitle || 'No title';
+        const url = analysis.url;
+        const description = analysis.metaDescription || 'No description available.';
+        
+        return `
+          <div class="p-4 border border-gray-200 rounded-md">
+            <h3 class="text-xl text-blue-800 hover:underline cursor-pointer mb-1 line-clamp-2">${title}</h3>
+            <div class="text-green-700 text-sm mb-1">${url}</div>
+            <p class="text-sm text-gray-700 line-clamp-2">${description}</p>
+          </div>
+        `;
+      }
+      
+      // Generate Facebook preview
+      function generateFacebookPreview(analysis) {
+        const title = analysis.ogTitle || analysis.pageTitle || 'No title';
+        const description = analysis.ogDescription || analysis.metaDescription || 'No description available.';
+        const image = analysis.ogImage || '';
+        
+        return `
+          <div class="border border-gray-300 rounded-md overflow-hidden">
+            ${image ? `
+              <div class="aspect-video bg-gray-100 flex items-center justify-center">
+                <img src="${image}" alt="${title}" class="max-w-full max-h-60 object-contain" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\' viewBox=\'0 0 400 300\'%3E%3Crect fill=\'%23CCCCCC\' width=\'400\' height=\'300\'/%3E%3Ctext fill=\'%23999999\' font-family=\'sans-serif\' font-size=\'30\' text-anchor=\'middle\' dominant-baseline=\'middle\' x=\'200\' y=\'150\'%3ENo Image%3C/text%3E%3C/svg%3E';" />
+              </div>
+            ` : `
+              <div class="aspect-video bg-gray-100 flex items-center justify-center text-gray-400">
+                No image available
+              </div>
+            `}
+            <div class="p-3 bg-white">
+              <p class="text-xs text-gray-500 uppercase mb-1">example.com</p>
+              <h3 class="text-base font-medium mb-1">${title}</h3>
+              <p class="text-sm text-gray-500 line-clamp-2">${description}</p>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Generate Twitter preview
+      function generateTwitterPreview(analysis) {
+        const title = analysis.twitterTitle || analysis.ogTitle || analysis.pageTitle || 'No title';
+        const description = analysis.twitterDescription || analysis.ogDescription || analysis.metaDescription || 'No description available.';
+        const image = analysis.twitterImage || analysis.ogImage || '';
+        
+        return `
+          <div class="border border-gray-300 rounded-md overflow-hidden">
+            ${image ? `
+              <div class="aspect-[7/3] bg-gray-100 flex items-center justify-center">
+                <img src="${image}" alt="${title}" class="max-w-full max-h-60 object-contain" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\' viewBox=\'0 0 400 300\'%3E%3Crect fill=\'%23CCCCCC\' width=\'400\' height=\'300\'/%3E%3Ctext fill=\'%23999999\' font-family=\'sans-serif\' font-size=\'30\' text-anchor=\'middle\' dominant-baseline=\'middle\' x=\'200\' y=\'150\'%3ENo Image%3C/text%3E%3C/svg%3E';" />
+              </div>
+            ` : `
+              <div class="aspect-[7/3] bg-gray-100 flex items-center justify-center text-gray-400">
+                No image available
+              </div>
+            `}
+            <div class="p-3 bg-white">
+              <h3 class="text-base font-medium mb-1">${title}</h3>
+              <p class="text-sm text-gray-500 line-clamp-2">${description}</p>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Export to PDF
+      function exportToPdf(analysis) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Set document properties
+        doc.setProperties({
+          title: 'SEO Analysis Report',
+          subject: `SEO Analysis for ${analysis.url}`,
+          author: 'SEOAnalyzer',
+          keywords: 'SEO, meta tags, analysis',
+          creator: 'SEOAnalyzer'
+        });
+        
+        // Add title
+        doc.setFontSize(20);
+        doc.setTextColor(33, 33, 33);
+        doc.text('SEO Analysis Report', 105, 20, { align: 'center' });
+        
+        // Add URL
+        doc.setFontSize(10);
+        doc.setTextColor(80, 80, 80);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 27, { align: 'center' });
+        
+        // URL
+        doc.setFontSize(12);
+        doc.setTextColor(33, 33, 33);
+        doc.text('URL:', 14, 40);
+        doc.setTextColor(33, 90, 130);
+        doc.text(analysis.url, 30, 40);
+        
+        // Score overview
+        doc.setFontSize(16);
+        doc.setTextColor(33, 33, 33);
+        doc.text('SEO Score Overview', 14, 55);
+        
+        doc.setFontSize(12);
+        doc.text(`SEO Score: ${analysis.seoScore}%`, 14, 65);
+        doc.text(`Meta Tags Found: ${analysis.metaTagsCount}`, 14, 72);
+        doc.text(`Issues Found: ${analysis.issuesCount}`, 14, 79);
+        
+        // Recommendations section
+        doc.setFontSize(16);
+        doc.text('Recommendations', 14, 95);
+        
+        let y = 105;
+        
+        if (analysis.recommendations.length === 0) {
+          doc.setFontSize(12);
+          doc.setTextColor(0, 128, 0);
+          doc.text('No critical issues found! Your meta tags are well optimized.', 14, y);
+          y += 10;
+        } else {
+          analysis.recommendations.forEach((rec, index) => {
+            if (y > 270) {
+              doc.addPage();
+              y = 20;
+            }
+            
+            doc.setFontSize(12);
+            doc.setTextColor(33, 33, 33);
+            doc.text(`${index + 1}. ${rec.title}`, 14, y);
+            y += 7;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(80, 80, 80);
+            
+            // Handle line wrapping for description
+            const description = doc.splitTextToSize(rec.description, 180);
+            doc.text(description, 14, y);
+            y += description.length * 5 + 5;
+          });
+        }
+        
+        // Meta Tags section
+        if (y > 240) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        doc.setFontSize(16);
+        doc.setTextColor(33, 33, 33);
+        doc.text('Basic Meta Tags', 14, y);
+        y += 10;
+        
+        analysis.basicMetaTags.forEach(tag => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          let name = tag.name || tag.property || (tag.rel ? `rel="${tag.rel}"` : '');
+          let value = tag.content || tag.href || '';
+          
+          doc.setFontSize(11);
+          doc.setTextColor(33, 33, 33);
+          doc.text(name, 14, y);
+          
+          // Add status indicators
+          if (tag.status === 'good') {
+            doc.setTextColor(0, 128, 0);
+            doc.text('✓', 100, y);
+          } else if (tag.status === 'warning') {
+            doc.setTextColor(255, 150, 0);
+            doc.text('⚠', 100, y);
+          } else if (tag.status === 'error') {
+            doc.setTextColor(255, 0, 0);
+            doc.text('✗', 100, y);
+          }
+          
+          y += 5;
+          
+          doc.setFontSize(10);
+          doc.setTextColor(80, 80, 80);
+          if (value) {
+            // Handle long values with wrapping
+            const wrappedValue = doc.splitTextToSize(value, 180);
+            doc.text(wrappedValue, 14, y);
+            y += wrappedValue.length * 5;
+          }
+          
+          doc.text(tag.message, 14, y);
+          y += 8;
+        });
+        
+        // Save the PDF
+        doc.save(`seo-analysis-${new Date().getTime()}.pdf`);
+      }
+      
+      // Show results
+      function showResults(analysis) {
+        // Hide other states
+        emptyState.classList.add('hidden');
+        
+        // Create score overview HTML
+        const scoreOverviewHTML = `
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">SEO Analysis Results</h2>
+            <div class="flex flex-col lg:flex-row gap-6">
+              <div class="flex-grow">
+                <div class="flex items-center mb-6">
+                  <div class="w-24 h-24 flex items-center justify-center rounded-full ${analysis.seoScore > 80 ? 'bg-green-100' : analysis.seoScore > 50 ? 'bg-amber-100' : 'bg-red-100'} mr-4">
+                    <span class="text-3xl font-bold ${analysis.seoScore > 80 ? 'text-green-600' : analysis.seoScore > 50 ? 'text-amber-600' : 'text-red-600'}">${analysis.seoScore}%</span>
+                  </div>
+                  <div>
+                    <h3 class="font-medium text-lg">Overall SEO Score</h3>
+                    <p class="text-sm text-gray-500">Based on meta tag analysis</p>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div class="flex justify-between border-b pb-2">
+                    <span class="text-sm font-medium">URL</span>
+                    <span class="text-sm text-right max-w-md break-all">${analysis.url}</span>
+                  </div>
+                  <div class="flex justify-between border-b pb-2">
+                    <span class="text-sm font-medium">Meta Tags Found</span>
+                    <span class="text-sm">${analysis.metaTagsCount}</span>
+                  </div>
+                  <div class="flex justify-between border-b pb-2">
+                    <span class="text-sm font-medium">Issues Found</span>
+                    <span class="text-sm">${analysis.issuesCount}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-grow lg:border-l lg:pl-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="font-medium">Actions</h3>
+                </div>
+                <div class="space-y-3">
+                  <button id="export-pdf-button" class="flex items-center w-full text-sm text-left px-3 py-2 border border-gray-200 rounded-md hover:bg-gray-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export as PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Create preview tabs HTML
+        const previewTabsHTML = `
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Search & Social Preview</h2>
+            <div class="mb-4 border-b border-gray-200">
+              <div class="flex space-x-4">
+                <button class="tab active" onclick="toggleTab(event, 'google-preview')">
+                  Google Search
+                </button>
+                <button class="tab" onclick="toggleTab(event, 'facebook-preview')">
+                  Facebook
+                </button>
+                <button class="tab" onclick="toggleTab(event, 'twitter-preview')">
+                  Twitter
+                </button>
+              </div>
+            </div>
+            <div id="google-preview" class="tab-content active">
+              <h3 class="text-sm font-medium mb-2 text-gray-600">GOOGLE SEARCH PREVIEW</h3>
+              ${generateGooglePreview(analysis)}
+            </div>
+            <div id="facebook-preview" class="tab-content">
+              <h3 class="text-sm font-medium mb-2 text-gray-600">FACEBOOK PREVIEW</h3>
+              ${generateFacebookPreview(analysis)}
+            </div>
+            <div id="twitter-preview" class="tab-content">
+              <h3 class="text-sm font-medium mb-2 text-gray-600">TWITTER PREVIEW</h3>
+              ${generateTwitterPreview(analysis)}
+            </div>
+          </div>
+        `;
+        
+        // Create meta tags analysis HTML
+        const metaTagsAnalysisHTML = `
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Meta Tags Analysis</h2>
+            <div class="mb-4 border-b border-gray-200">
+              <div class="flex space-x-4">
+                <button class="tab active" onclick="toggleTab(event, 'basic-tags')">
+                  Basic SEO (${analysis.basicMetaTags.length})
+                </button>
+                <button class="tab" onclick="toggleTab(event, 'social-tags')">
+                  Social Media (${analysis.socialMetaTags.length})
+                </button>
+                <button class="tab" onclick="toggleTab(event, 'technical-tags')">
+                  Technical (${analysis.technicalMetaTags.length})
+                </button>
+              </div>
+            </div>
+            <div id="basic-tags" class="tab-content active">
+              <h3 class="text-sm font-medium mb-2 text-gray-600">BASIC SEO META TAGS</h3>
+              ${formatMetaTagList(analysis.basicMetaTags)}
+            </div>
+            <div id="social-tags" class="tab-content">
+              <h3 class="text-sm font-medium mb-2 text-gray-600">SOCIAL MEDIA META TAGS</h3>
+              ${formatMetaTagList(analysis.socialMetaTags)}
+            </div>
+            <div id="technical-tags" class="tab-content">
+              <h3 class="text-sm font-medium mb-2 text-gray-600">TECHNICAL META TAGS</h3>
+              ${formatMetaTagList(analysis.technicalMetaTags)}
+            </div>
+          </div>
+        `;
+        
+        // Create recommendations HTML
+        const recommendationsHTML = `
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Recommendations</h2>
+            <div class="space-y-4">
+              ${analysis.recommendations.length > 0 ? analysis.recommendations.map(rec => `
+                <div class="p-4 border border-amber-200 bg-amber-50 rounded-md">
+                  <h3 class="font-medium text-amber-800">${rec.title}</h3>
+                  <p class="text-sm text-amber-700 mb-2">${rec.description}</p>
+                  ${rec.code ? `
+                    <pre class="text-xs bg-gray-800 text-gray-200 p-2 rounded overflow-x-auto">${rec.code}</pre>
+                  ` : ''}
+                </div>
+              `).join('') : `
+                <div class="p-4 border border-green-200 bg-green-50 rounded-md">
+                  <h3 class="font-medium text-green-800">Great job!</h3>
+                  <p class="text-sm text-green-700">No critical issues were found. Your meta tags are well-optimized.</p>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+        
+        // Insert results HTML
+        resultsContainer.innerHTML = scoreOverviewHTML + previewTabsHTML + metaTagsAnalysisHTML + recommendationsHTML;
+        resultsContainer.classList.remove('hidden');
+        
+        // Add export PDF event listener
+        document.getElementById('export-pdf-button').addEventListener('click', () => {
+          exportToPdf(analysis);
+        });
+        
+        // Add global toggle tab function
+        window.toggleTab = toggleTab;
+      }
+    </script>
   </body>
 </html>
