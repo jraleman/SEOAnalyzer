@@ -1,6 +1,6 @@
-import { SeoAnalysis, MetaTag as BaseMetaTag, Recommendation } from '@shared/schema';
 import axios from 'axios';
-import * as cheerio from 'cheerio';
+import { SeoAnalysis, MetaTag as BaseMetaTag, Recommendation } from '@shared/schema';
+import { load } from 'cheerio';
 
 // Define a custom meta tag type that makes missing optional
 type MetaTag = Omit<BaseMetaTag, 'missing'> & { missing?: boolean };
@@ -26,13 +26,20 @@ function createMetaTag(tag: {
   };
 }
 
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+// 'https://corsproxy.io/?';
+
+/**
+ * Fetch content from a URL using CORS proxy
+ */
 export async function fetchUrlContent(url: string): Promise<string> {
   try {
-    const response = await axios.get(url, {
+    // Use CORS proxy to fetch external website content
+    const response = await axios.get(`${CORS_PROXY}${encodeURIComponent(url)}`, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SeoMetaTagAnalyzer/1.0)',
-      },
-      timeout: 10000, // 10 second timeout
+        'Accept': 'text/html',
+        'User-Agent': 'Mozilla/5.0 (compatible; SeoMetaTagAnalyzer/1.0)'
+      }
     });
     
     if (response.status !== 200) {
@@ -102,7 +109,7 @@ function validateMetaDescription(description: string | undefined): { status: Met
  * Analyze SEO meta tags from HTML
  */
 export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
-  const $ = cheerio.load(html);
+  const $ = load(html);
   
   // Initialize arrays for meta tags
   const basicMetaTags: MetaTag[] = [];
@@ -114,12 +121,13 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
   const pageTitle = $('title').text().trim();
   let titleStatus = validateTitleTag(pageTitle);
   
-  basicMetaTags.push(createMetaTag({
+  basicMetaTags.push({
     name: 'title',
     content: pageTitle,
     status: titleStatus.status,
-    message: titleStatus.message
-  }));
+    message: titleStatus.message,
+    missing: !pageTitle
+  });
   
   if (titleStatus.status === 'error') {
     recommendations.push({
@@ -139,12 +147,13 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
   const metaDescription = $('meta[name="description"]').attr('content');
   let descriptionStatus = validateMetaDescription(metaDescription);
   
-  basicMetaTags.push(createMetaTag({
+  basicMetaTags.push({
     name: 'description',
     content: metaDescription,
     status: descriptionStatus.status,
-    message: descriptionStatus.message
-  }));
+    message: descriptionStatus.message,
+    missing: !metaDescription
+  });
   
   if (descriptionStatus.status === 'error') {
     recommendations.push({
@@ -163,22 +172,24 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
   // Get meta keywords
   const metaKeywords = $('meta[name="keywords"]').attr('content');
   
-  basicMetaTags.push(createMetaTag({
+  basicMetaTags.push({
     name: 'keywords',
     content: metaKeywords,
     status: metaKeywords ? 'info' : 'info',
-    message: metaKeywords ? 'Keywords are present but have limited impact on modern SEO.' : 'Keywords meta tag is missing, but has limited impact on modern SEO.'
-  }));
+    message: metaKeywords ? 'Keywords are present but have limited impact on modern SEO.' : 'Keywords meta tag is missing, but has limited impact on modern SEO.',
+    missing: !metaKeywords
+  });
   
   // Check canonical URL
   const canonicalUrl = $('link[rel="canonical"]').attr('href');
   
-  basicMetaTags.push(createMetaTag({
+  basicMetaTags.push({
     rel: 'canonical',
     href: canonicalUrl,
     status: canonicalUrl ? 'good' : 'warning',
-    message: canonicalUrl ? 'Canonical URL is properly set.' : 'Canonical URL is missing. It helps prevent duplicate content issues.'
-  }));
+    message: canonicalUrl ? 'Canonical URL is properly set.' : 'Canonical URL is missing. It helps prevent duplicate content issues.',
+    missing: !canonicalUrl
+  });
   
   if (!canonicalUrl) {
     recommendations.push({
@@ -191,12 +202,13 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
   // Check robots meta tag
   const robotsContent = $('meta[name="robots"]').attr('content');
   
-  basicMetaTags.push(createMetaTag({
+  basicMetaTags.push({
     name: 'robots',
     content: robotsContent,
     status: robotsContent ? 'info' : 'info',
-    message: robotsContent ? `Robots directive: ${robotsContent}` : 'No robots directive specified. Default is to allow indexing and following links.'
-  }));
+    message: robotsContent ? `Robots directive: ${robotsContent}` : 'No robots directive specified. Default is to allow indexing and following links.',
+    missing: !robotsContent
+  });
   
   // Check Open Graph tags
   const ogTitle = $('meta[property="og:title"]').attr('content');
@@ -205,26 +217,29 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
   const ogUrl = $('meta[property="og:url"]').attr('content');
   const ogType = $('meta[property="og:type"]').attr('content');
   
-  socialMetaTags.push(createMetaTag({
+  socialMetaTags.push({
     property: 'og:title',
     content: ogTitle,
     status: ogTitle ? 'good' : 'warning',
-    message: ogTitle ? 'Open Graph title is present.' : 'Open Graph title is missing. Important for social media sharing.'
-  }));
+    message: ogTitle ? 'Open Graph title is present.' : 'Open Graph title is missing. Important for social media sharing.',
+    missing: !ogTitle
+  });
   
-  socialMetaTags.push(createMetaTag({
+  socialMetaTags.push({
     property: 'og:description',
     content: ogDescription,
     status: ogDescription ? 'good' : 'warning',
-    message: ogDescription ? 'Open Graph description is present.' : 'Open Graph description is missing. Important for social media sharing.'
-  }));
+    message: ogDescription ? 'Open Graph description is present.' : 'Open Graph description is missing. Important for social media sharing.',
+    missing: !ogDescription
+  });
   
-  socialMetaTags.push(createMetaTag({
+  socialMetaTags.push({
     property: 'og:image',
     content: ogImage,
     status: ogImage ? 'good' : 'warning',
-    message: ogImage ? 'Open Graph image is present.' : 'Open Graph image is missing. Images improve engagement on social media.'
-  }));
+    message: ogImage ? 'Open Graph image is present.' : 'Open Graph image is missing. Images improve engagement on social media.',
+    missing: !ogImage
+  });
   
   socialMetaTags.push(createMetaTag({
     property: 'og:url',
@@ -300,12 +315,13 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
   // Check viewport
   const viewport = $('meta[name="viewport"]').attr('content');
   
-  technicalMetaTags.push(createMetaTag({
+  technicalMetaTags.push({
     name: 'viewport',
     content: viewport,
     status: viewport ? 'good' : 'warning',
-    message: viewport ? 'Viewport is properly set.' : 'Viewport meta tag is missing. Important for mobile responsiveness.'
-  }));
+    message: viewport ? 'Viewport is properly set.' : 'Viewport meta tag is missing. Important for mobile responsiveness.',
+    missing: !viewport
+  });
   
   if (!viewport) {
     recommendations.push({
@@ -420,4 +436,27 @@ export function analyzeSeoTags(html: string, url: string): SeoAnalysis {
     technicalMetaTags,
     recommendations
   };
+}
+
+/**
+ * Perform client-side SEO analysis
+ */
+export async function analyzeUrl(url: string): Promise<SeoAnalysis> {
+  try {
+    // Ensure URL has protocol
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    
+    // Fetch the URL content
+    const html = await fetchUrlContent(url);
+    
+    // Analyze the SEO tags
+    return analyzeSeoTags(html, url);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to analyze URL: ${error.message}`);
+    }
+    throw new Error('Failed to analyze URL: Unknown error');
+  }
 }

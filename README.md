@@ -1,8 +1,12 @@
-# SEO Meta Tag Analyzer
+# SEOAnalyzer
 
-![SEO Meta Tag Analyzer](./generated-icon.png)
+![SEOAnalyzer](./generated-icon.png)
 
 A powerful, interactive web application for analyzing and visualizing SEO meta tags on any website. This tool helps you identify SEO issues, provides recommendations for improvements, and generates comprehensive reports with visual representations of how your page would appear in search engines and social media platforms.
+
+[Click here for a (broken) live demo!](https://jraleman.com/SEOAnalyzer)
+
+> No worries, it works fine locally ;)
 
 ## 🌟 Features
 
@@ -33,8 +37,8 @@ A powerful, interactive web application for analyzing and visualizing SEO meta t
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/seo-meta-tag-analyzer.git
-   cd seo-meta-tag-analyzer
+   git clone git@github.com:jraleman/SEOAnalyzer.git
+   cd SEOAnalyzer
    ```
 
 2. Install dependencies:
@@ -47,14 +51,42 @@ A powerful, interactive web application for analyzing and visualizing SEO meta t
    npm run dev
    ```
 
-4. Open your browser and navigate to:
+4. Open your browser and navigate to [http://localhost:5000](http://localhost:5000) or [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+## 🚀 Deployment
+
+### GitHub Pages Deployment
+
+This application can be deployed as a static site on GitHub Pages using the pre-built version:
+
+1. Fork this repository to your GitHub account
+2. In your forked repository, go to Settings > Pages
+3. Set the source to the "gh-pages" branch and save
+4. GitHub will provide you with a URL where your application is deployed
+
+Alternatively, you can deploy manually from your local machine:
+
+1. Navigate to the `gh-pages` directory, which contains a standalone version of the application
+2. Initialize a new git repository in this directory:
+   ```bash
+   cd gh-pages
+   git init
+   git add .
+   git commit -m "Initial commit for GitHub Pages"
    ```
-   http://localhost:5000
+
+3. Add your GitHub repository as remote and push to the gh-pages branch:
+   ```bash
+   git remote add origin git@github.com:yourusername/reponame.git
+   git push -u origin master:gh-pages -f
    ```
-   or
-      ```
-   http://127.0.0.1:5000
-   ```
+
+You can also use the `gh-pages` npm package:
+```bash
+npx gh-pages -d gh-pages
+```
+
+Your site should be available.
 
 ## 🔍 How to Use
 
@@ -110,15 +142,27 @@ The PDF export functionality generates a professionally formatted report with:
 │   │   ├── components/    # React components 
 │   │   ├── hooks/         # Custom React hooks
 │   │   ├── lib/           # Utility functions and services
-│   │   │   └── pdfExport.ts  # PDF generation utility
+│   │   │   ├── pdfExport.ts  # PDF generation utility
+│   │   │   ├── clientSeoAnalyzer.ts  # Client-side SEO analyzer
+│   │   │   ├── queryClient.ts  # API client configuration
+│   │   │   └── utils.ts  # Utility functions
 │   │   ├── pages/         # Main application pages
 │   │   └── App.tsx        # Main application component
 ├── server/                # Backend code
 │   ├── index.ts           # Server entry point
 │   ├── routes.ts          # API routes
+│   ├── vite.ts            # Server-side Vite configuration
 │   └── seoAnalyzer.ts     # SEO analysis logic
 ├── shared/                # Shared code between client and server
 │   └── schema.ts          # Zod schemas and TypeScript types
+├── gh-pages/              # GitHub Pages deployment files
+│   ├── index.html         # Standalone HTML file for GitHub Pages
+│   └── .nojekyll          # Prevents GitHub Pages from using Jekyll
+├── scripts/               # Utility scripts
+│   ├── deploy-gh-pages.js # JavaScript script for GitHub Pages deployment
+│   └── deploy.sh          # Shell script for GitHub Pages deployment
+├── .github/workflows/     # GitHub Actions workflow files
+│   └── deploy.yml         # GitHub Pages deployment workflow
 └── README.md              # This file
 ```
 
@@ -132,7 +176,6 @@ The PDF export functionality generates a professionally formatted report with:
 - **tailwindcss**: Utility-first CSS framework for styling
 - **shadcn/ui**: High-quality UI components built on Radix UI
 - **lucide-react**: SVG icon library
-- **recharts**: Composable charting library for data visualization
 - **jspdf & html2canvas**: PDF generation for exporting analysis reports
 - **wouter**: Lightweight routing solution
 

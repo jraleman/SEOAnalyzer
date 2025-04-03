@@ -7,7 +7,7 @@ import LoadingState from '@/components/LoadingState';
 import { SeoAnalysis } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { analyzeUrl } from '@/lib/clientSeoAnalyzer';
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -18,8 +18,7 @@ export default function Home() {
 
   const analyzeUrlMutation = useMutation({
     mutationFn: async (url: string) => {
-      const response = await apiRequest('POST', '/api/analyze', { url });
-      return response.json() as Promise<SeoAnalysis>;
+      return await analyzeUrl(url);
     },
     onSuccess: (data) => {
       setAnalysisResult(data);
@@ -48,7 +47,7 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
       <header className="mb-6 md:mb-8 text-center">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">SEO Meta Tag Analyzer</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">SEOAnalyzer</h1>
         <p className="text-gray-600 max-w-2xl mx-auto px-2">
           Check and analyze SEO meta tags from any website to ensure optimal search engine and social media presence.
         </p>
@@ -76,7 +75,7 @@ export default function Home() {
       )}
 
       <footer className="text-center text-gray-500 text-sm mt-8">
-        <p>SEO Meta Tag Analyzer &copy; {new Date().getFullYear()} | Check meta tags for better search engine optimization</p>
+        <p>SEOAnalyzer &copy; {new Date().getFullYear()} | Check meta tags for better search engine optimization</p>
       </footer>
     </div>
   );

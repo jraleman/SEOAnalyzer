@@ -8,7 +8,8 @@ export const metaTagSchema = z.object({
   rel: z.string().optional(),
   href: z.string().optional(),
   status: z.enum(['good', 'warning', 'error', 'info']).optional(),
-  missing: z.boolean().optional().default(false),
+  // Made optional again - default value should be handled in code
+  missing: z.boolean().optional(),
   message: z.string().optional(),
 });
 

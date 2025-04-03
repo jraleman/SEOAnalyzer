@@ -68,8 +68,8 @@ export const exportToPdf = async (analysis: SeoAnalysis): Promise<void> => {
     doc.setProperties({
       title: `SEO Analysis for ${analysis.url}`,
       subject: 'SEO Analysis Report',
-      author: 'SEO Meta Tag Analyzer',
-      creator: 'SEO Meta Tag Analyzer'
+      author: 'SEOAnalyzer',
+      creator: 'SEOAnalyzer'
     });
 
     // Add header
@@ -318,7 +318,7 @@ export const exportToPdf = async (analysis: SeoAnalysis): Promise<void> => {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.setTextColor('#9CA3AF');
-      doc.text(`Page ${i} of ${pageCount} | SEO Meta Tag Analyzer | ${analysis.url}`, 20, 287);
+      doc.text(`Page ${i} of ${pageCount} | SEOAnalyzer | ${analysis.url}`, 20, 287);
     }
 
     // Save the PDF

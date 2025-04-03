@@ -19,3 +19,31 @@ Generate a README.md file for this project. Make sure to include sections for us
 ---
 
 Remove database functionality and any other code that is not being used.
+
+---
+
+Can you make this application work on gh-pages? If so, make any changes neccesary to make this work.
+
+---
+
+It throws the following error: "Failed to analyze URL: Failed to fetch URL: HTTP 500"
+
+Make sure that the web app is able to do the request properly. It should work with gh-pages (GitHub Pages)
+
+---
+
+Show me in this chat how I would be able to publish the web app build into the gh-page branch properly. I want the script so I can add it into my package.json
+
+---
+
+gh-page deployment is successful, but the page isn't loading. The error is: "/SEOAnalyzer/src/main.tsx net::ERR_ABORTED 404 (Not Found)"
+
+---
+
+When I run the test locally node scripts/test-gh-pages.js, it shows this error:
+"""
+rest-express/rest-express/src/main.tsx:1
+Failed to load resource: the server responded with a status of 404 (Not Found)
+"""
+
+---
